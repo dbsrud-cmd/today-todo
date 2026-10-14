@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>오늘 뭐부터 하지?</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="task-store.js"></script>
+  <script defer src="app.js"></script>
+  <script defer src="recommendation.js"></script>
+  <script defer src="recommendation-ui.js"></script>
+</head>
+<body>
+  <div id="celebration" class="celebration" hidden>
+    <div id="confetti" aria-hidden="true"></div>
+    <p class="celebration-message" role="status">🎉 모두 끝냈어요! 오늘도 수고했어요.</p>
+  </div>
+  <main class="card">
+    <p class="eyebrow">작은 시작, 하나씩</p>
+    <h1>오늘 뭐부터 하지?</h1>
+    <p class="intro">머릿속 할 일을 적어 보세요.</p>
+    <nav class="day-tabs" aria-label="할 일 날짜">
+      <button id="today-tab" type="button" aria-pressed="true">오늘</button>
+      <button id="tomorrow-tab" type="button" aria-pressed="false">내일</button>
+      <button id="history-tab" type="button" aria-pressed="false">과거 기록</button>
+    </nav>
+    <p id="day-date" class="day-date"></p>
+    <p id="day-help" class="hint"></p>
+    <div id="history-filters" class="history-filters" hidden>
+      <div><label for="history-year">연도</label><select id="history-year"><option value="">전체 연도</option></select></div>
+      <div><label for="history-month">월</label><select id="history-month"><option value="">전체 월</option></select></div>
+      <div><label for="history-day">일</label><select id="history-day"><option value="">전체 일</option></select></div>
+      <div><label for="history-weekday">요일</label><select id="history-weekday"><option value="">전체 요일</option><option value="0">일요일</option><option value="1">월요일</option><option value="2">화요일</option><option value="3">수요일</option><option value="4">목요일</option><option value="5">금요일</option><option value="6">토요일</option></select></div>
+      <button id="history-reset" type="button" class="secondary">필터 초기화</button>
+      <p class="hint">보고 싶은 날짜나 요일을 선택하세요. 날짜 미상 기록은 모든 필터를 비우면 볼 수 있어요.</p>
+    </div>
+    <form id="task-form" novalidate>
+      <label id="form-label" for="task-title">새 할 일</label>
+      <div class="input-row">
+        <input id="task-title" name="title" type="text" maxlength="200" placeholder="예: 책 10쪽 읽기" aria-describedby="input-help error-message" autocomplete="off">
+        <button id="submit-button" type="submit">추가</button>
+      </div>
+      <p id="input-help" class="hint">최대 200자 · Enter 키로도 추가할 수 있어요.</p>
+      <div class="options-row">
+        <div><label for="task-priority">중요도</label><select id="task-priority"><option value="low">★ 낮음</option><option value="normal" selected>★★ 보통</option><option value="high">★★★ 높음</option></select></div>
+        <div><label for="task-due-date">마감일 (선택)</label><input id="task-due-date" type="date" min="0001-01-01" max="9999-12-31"></div>
+      </div>
+      <button id="cancel-button" type="button" class="secondary" hidden>수정 취소</button>
+      <p id="error-message" class="error" role="alert"></p>
+    </form>
+    <section aria-labelledby="list-heading">
+      <div class="list-header"><h2 id="list-heading">내 할 일</h2><span id="task-count">0개</span></div>
+      <button id="delete-completed-button" type="button" class="danger" disabled>완료한 일 모두 삭제 (0개)</button>
+      <div id="undo-panel" class="undo-panel" hidden>
+        <span id="undo-message"></span>
+        <button id="undo-delete-button" type="button" class="secondary">삭제 취소</button>
+        <p class="hint">가장 최근 삭제만 되돌립니다. 새로고침하거나 페이지를 닫으면 삭제 취소 기록은 사라져요.</p>
+      </div>
+      <p class="hint">미완료 먼저 · 별이 많은 순 · 같은 별 개수는 추가 순서로 표시해요.</p>
+      <label id="progress-label" for="task-progress">진행률: 전체 0개 중 0개 완료 (0%)</label>
+      <progress id="task-progress" value="0" max="100" aria-describedby="progress-help">0%</progress>
+      <p id="progress-help" class="hint">할 일 옆의 체크박스를 누르면 완료 상태를 바꿀 수 있어요.</p>
+      <p id="empty-message" class="empty">아직 할 일이 없어요. 첫 할 일을 추가해 보세요.</p>
+      <ul id="task-list"></ul>
+      <p id="status-message" class="hint" role="status"></p>
+    </section>
+    <section class="notice" aria-labelledby="recommend-heading">
+      <h2 id="recommend-heading">오늘 뭐부터 할까요?</h2>
+      <p class="hint">내가 정한 중요도(별 개수)가 높은 순으로 추천해요. 같은 중요도에서는 마감일이 빠른 일을 먼저 보여줘요.</p>
+      <button id="recommend-button" type="button">추천 순서 보기</button>
+      <p id="recommend-status" class="hint" role="status"></p>
+      <ol id="recommend-list"></ol>
+    </section>
+    <details id="settings-panel" class="notice settings-panel">
+      <summary>설정</summary>
+      <details id="data-settings" class="data-settings">
+        <summary>데이터 관리</summary>
+    <section aria-labelledby="backup-heading">
+      <h2 id="backup-heading">목록 백업·복원</h2>
+      <p class="hint">백업은 목록을 파일로 내려받아 보관하는 기능입니다. 다른 브라우저나 컴퓨터로 옮길 때도 사용할 수 있어요. 복원은 선택한 파일의 목록으로 현재 목록을 바꿉니다. 실수로 삭제한 일은 위의 ‘삭제 취소’를 사용하세요.</p>
+      <button id="export-button" type="button" class="secondary">백업 내려받기</button>
+      <label for="import-file">백업 파일 선택</label><input id="import-file" type="file" accept=".json,application/json">
+      <p id="backup-status" class="hint" role="status"></p>
+    </section>
+      </details>
+    </details>
+    <p id="storage-notice" class="notice" role="status"></p>
+    <p class="hint">일반 창에서 사용해 주세요. 시크릿 창의 종료 또는 브라우저 데이터 삭제 시 저장된 목록이 사라질 수 있어요. 파일을 옮기거나 다른 브라우저로 열면 기존 목록이 보이지 않을 수 있어요.</p>
+  </main>
+</body>
+</html>
